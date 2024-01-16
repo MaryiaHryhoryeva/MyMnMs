@@ -216,13 +216,13 @@ class VehicleActivityServing(VehicleActivity):
 class Vehicle(TimeDependentSubject):
 
     _counter = 0
-
+    instances = []
     def __init__(self,
                  node: str,
                  capacity: int,
                  mobility_service: str,
                  is_personal: bool,
-                 initial_speed: float = 13.8,
+                 initial_speed: float = 8.3,
                  activities: Optional[List[VehicleActivity]] = None):
         """
         Class representing a vehicle in the simulation
@@ -237,7 +237,7 @@ class Vehicle(TimeDependentSubject):
         """
 
         super(Vehicle, self).__init__()
-
+        self.__class__.instances.append(self)
         self._global_id = str(Vehicle._counter)
         Vehicle._counter += 1
 
@@ -251,7 +251,12 @@ class Vehicle(TimeDependentSubject):
         self._current_node = node
         self._remaining_link_length = None
         self._position = None                       # current vehicle coordinates
-        self._distance = 0                          # travelled distance ( reset to zero if other trip ?)
+        self._distance = 0				# travelled distance ( reset to zero if other trip ?)
+        self._pickup_distance = 0
+        self._service_distance = 0
+        self._repositioning_distance = 0
+        self._trip_counter = 0
+        self._driver_profit = 0                          
         self._iter_path = None
         self.speed = initial_speed                  # current speed
 
@@ -270,6 +275,26 @@ class Vehicle(TimeDependentSubject):
     @property
     def distance(self):
         return self._distance
+
+    @property
+    def pickup_distance(self):
+        return self._pickup_distance
+
+    @property
+    def service_distance(self):
+        return self._service_distance
+
+    @property
+    def repositioning_distance(self):
+        return self._repositioning_distance
+
+    @property
+    def trip_counter(self):
+        return self._trip_counter
+
+    @property
+    def driver_profit(self):
+        return self._driver_profit
 
     @property
     def is_full(self):
@@ -360,6 +385,31 @@ class Vehicle(TimeDependentSubject):
         for user in self.passengers.values():
             user.update_distance(dist)
 
+    def trip_counter_update(self):
+        self._trip_counter = self._trip_counter + 1
+        return self._trip_counter
+
+    def driver_profit_update(self, trip_profit: float):
+        self.driver_profit = self.driver_profit + trip_profit
+
+    def update_pickup_distance(self, dist: float):
+        if self.activity_type is ActivityType.PICKUP:
+            self._pickup_distance += dist
+        else:
+            pass
+
+    def update_service_distance(self, dist: float):
+        if self.activity_type is ActivityType.SERVING:
+            self._service_distance += dist
+        else:
+            pass
+
+    def update_repositioning_distance(self, dist: float):
+        if self.activity_type is ActivityType.REPOSITIONING:
+            self._repositioning_distance += dist
+        else:
+            pass
+
     def set_position(self, position: np.ndarray):
         self._position = position
 
@@ -407,6 +457,10 @@ class Vehicle(TimeDependentSubject):
     @classmethod
     def reset_counter(cls):
         cls._counter = 0
+
+    @driver_profit.setter
+    def driver_profit(self, value):
+        self._driver_profit = value
 
 
 class Car(Vehicle):

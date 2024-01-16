@@ -197,7 +197,7 @@ class CSVDemandManager(AbstractDemandManager):
         copy = cls(self._filename, self._delimiter)
         return copy
 
-    def construct_user(self, row) -> User:
+    def construct_user(self, row, dest_region_demand_level=None) -> User:
         if self._demand_type == 'node':
             origin = row[2]
             destination = row[3]
@@ -215,6 +215,10 @@ class CSVDemandManager(AbstractDemandManager):
         return User(row[0], origin, destination, Time(row[1]),
                     available_mobility_services=None if 'MOBILITY SERVICES' not in self._optional_columns.keys() else row[self._optional_columns['MOBILITY SERVICES']].split(' '),
                     mobility_services_graph=None if 'MOBILITY SERVICES GRAPH' not in self._optional_columns.keys() else row[self._optional_columns['MOBILITY SERVICES GRAPH']],
+                    origin_region_demand_level=None if 'O_dem_lvl' not in self._optional_columns.keys() else row[self._optional_columns['O_dem_lvl']],
+                    dest_region_demand_level=None if 'D_dem_lvl' not in self._optional_columns.keys() else row[self._optional_columns['D_dem_lvl']],
+                    origin_region=None if 'O_reg_idx' not in self._optional_columns.keys() else row[self._optional_columns['O_reg_idx']],
+                    destination_region=None if 'D_reg_idx' not in self._optional_columns.keys() else row[self._optional_columns['D_reg_idx']],
                     path=forced_path, forced_path_chosen_mobility_services=chosen_ms)
 
     def __del__(self):

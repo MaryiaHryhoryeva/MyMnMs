@@ -93,7 +93,7 @@ class CSVUserObserver(TimeDependentObserver):
             filename: The name of the file
             prec: The precision for floating point number
         """
-        self._header = ["TIME", "ID", "LINK", "POSITION", "DISTANCE", "STATE", "VEHICLE"]
+        self._header = ["TIME", "ID", "LINK", "POSITION", "DISTANCE", "STATE", "VEHICLE", "CONTINUOUS_JOURNEY", "NOT_MATCHED", "MATCHING_TIME", "PICKUP_TIME", "ARRIVAL_TIME"]
         self._filename = filename
         self._file = open(self._filename, "w")
         self._csvhandler = csv.writer(self._file, delimiter=';', quotechar='|')
@@ -110,7 +110,12 @@ class CSVUserObserver(TimeDependentObserver):
                f"{subject.position[0]:.{self._prec}f} {subject.position[1]:.{self._prec}f}" if subject.position is not None else None,
                f"{subject.distance:.{self._prec}f}",
                subject.state.name,
-               str(subject._vehicle.id) if subject._vehicle is not None else None]
+               str(subject._vehicle.id) if subject._vehicle is not None else None,
+               subject._continuous_journey,
+               subject.refused,
+               subject.matched_time,
+               subject.picked_up_time,
+               subject.arrival_time]
         # log.info(f"OBS {time}: {row}")
 
         self._csvhandler.writerow(row)
@@ -125,7 +130,7 @@ class CSVVehicleObserver(TimeDependentObserver):
             filename: The name of the file
             prec: The precision for floating point number
         """
-        self._header = ["TIME", "ID", "TYPE", "LINK", "POSITION", "SPEED", "STATE", "DISTANCE", "PASSENGERS"]
+        self._header = ["TIME", "ID", "TYPE", "LINK", "POSITION", "SPEED", "STATE", "DISTANCE", "PASSENGERS", "PICKUP_DIST", "SERVICE_DIST"]
         self._filename = filename
         self._file = open(self._filename, "w")
         self._csvhandler = csv.writer(self._file, delimiter=';', quotechar='|')
@@ -145,6 +150,8 @@ class CSVVehicleObserver(TimeDependentObserver):
                f"{subject.speed:.{self._prec}f}",
                subject.activity_type.name if subject.activity_type is not None else None,
                f"{subject.distance:.{self._prec}f}",
-               ' '.join(p for p in subject.passengers)]
+               ' '.join(p for p in subject.passengers),
+               f"{subject.pickup_distance:.{self._prec}f}",
+               f"{subject.service_distance:.{self._prec}f}"]
         # log.info(f"OBS {time}: {row}")
         self._csvhandler.writerow(row)

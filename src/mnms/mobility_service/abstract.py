@@ -76,7 +76,7 @@ class AbstractMobilityService(ABC):
             veh_path.append((key, link_length))
         return veh_path
 
-    @abstractmethod
+
     def service_level_costs(self, nodes:List[str]) -> dict:
         """
         Returns a dict of costs representing the cost of the service computed from a path
@@ -88,8 +88,7 @@ class AbstractMobilityService(ABC):
         -------
 
         """
-        #return create_service_costs()
-        pass
+        return create_service_costs()
 
     def add_request(self, user: "User", drop_node:str) -> None:
         """
@@ -176,7 +175,7 @@ class AbstractMobilityService(ABC):
         else:
             self._counter_matching += 1
 
-    @abstractmethod
+
     def periodic_maintenance(self, dt: Dt):
         """
         This method is called every Dt steps to perform maintenance
@@ -227,7 +226,7 @@ class AbstractMobilityService(ABC):
         """
     pass
 
-    @abstractmethod
+
     def rebalancing(self, next_demand: List[User], horizon: Dt):
         """
         Rebalancing of the mobility service fleet
@@ -243,7 +242,7 @@ class AbstractMobilityService(ABC):
         """
         pass
 
-    @abstractmethod
+
     def replanning(self, veh: Vehicle, new_activities: List[VehicleActivity]) -> List[VehicleActivity]:
         """
         Update the activities of a vehicle

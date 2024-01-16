@@ -452,7 +452,6 @@ class AbstractDecisionModel(ABC):
              {'user': user object, 'paths': list of paths the user considers}
         """
         gnodes = self._mlgraph.graph.nodes
-
         for uid, d in users_paths.items():
             user = d['user']
             user_paths = d['paths']
@@ -603,7 +602,6 @@ class AbstractDecisionModel(ABC):
             k = self._n_shortest_path
             uids, origins, destinations, available_layers, chosen_mservices, nb_paths = \
                 self._process_shortest_path_inputs(subgraph_layers, k, personal_ms_planning_origins)
-
             ## Compute the shorest paths in parallel
             paths = parallel_k_shortest_path(self._mlgraph.graph,
                                              origins,

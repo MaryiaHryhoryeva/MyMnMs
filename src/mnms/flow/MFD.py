@@ -57,11 +57,12 @@ class Reservoir(AbstractReservoir):
 
 
 class MFDFlowMotor(AbstractMFDFlowMotor):
+    instances = []
     def __init__(self, outfile: str = None):
         super(MFDFlowMotor, self).__init__(outfile=outfile)
         if outfile is not None:
             self._csvhandler.writerow(['AFFECTATION_STEP', 'FLOW_STEP', 'TIME', 'RESERVOIR', 'VEHICLE_TYPE', 'SPEED', 'ACCUMULATION'])
-
+        self.__class__.instances.append(self)
         self.reservoirs: Dict[str, Reservoir] = dict()
         self.users: Optional[Dict[str, User]] = dict()
 
@@ -177,6 +178,9 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             dist_travelled = veh.remaining_link_length
             elapsed_time = dist_travelled / speed
             veh.update_distance(dist_travelled)
+            veh.update_pickup_distance(dist_travelled)
+            veh.update_service_distance(dist_travelled)
+            veh.update_repositioning_distance(dist_travelled)
             veh._remaining_link_length = 0
             self.set_vehicle_position(veh)
             for passenger_id, passenger in veh.passengers.items():
@@ -196,6 +200,9 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         else:
             veh._remaining_link_length -= dist_travelled
             veh.update_distance(dist_travelled)
+            veh.update_pickup_distance(dist_travelled)
+            veh.update_service_distance(dist_travelled)
+            veh.update_repositioning_distance(dist_travelled)
             self.set_vehicle_position(veh)
             for passenger_id, passenger in veh.passengers.items():
                 passenger.set_position(veh._current_link, veh.remaining_link_length, veh.position)
@@ -277,6 +284,9 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         elapsed_time = Dt(seconds=veh.remaining_link_length / veh.speed)
         log.info(f"{veh} finished its activity {veh.activity_type}")
         veh.update_distance(veh.remaining_link_length)
+        veh.update_pickup_distance(veh.remaining_link_length)
+        veh.update_service_distance(veh.remaining_link_length)
+        veh.update_repositioning_distance(veh.remaining_link_length)
         veh._remaining_link_length = 0
         veh._current_node = veh._current_link[1]
         self.set_vehicle_position(veh)

@@ -11,6 +11,10 @@ from mnms.time import Dt, Time
 from mnms.log import create_logger
 from mnms.mobility_service.abstract import AbstractMobilityService
 
+from mnms.mobility_service.ride_hailing import *
+from mnms.mobility_service.ride_hailing_batch import *
+from mnms.mobility_service.abstract import AbstractMobilityService
+
 log = create_logger(__name__)
 
 
@@ -230,6 +234,18 @@ class UserFlow(object):
 
                 u.notify(self._tcurrent)
 
+            if u.state is UserState.WAITING_ANSWER:
+                self._waiting_answer.setdefault(u.id, u.response_dt.copy())
+
+            if u.state is u.state.WAITING_VEHICLE and u.matched_time is None:
+                u.matched(self._tcurrent)
+
+            if u.state is u.state.INSIDE_VEHICLE and u.matched_time is None:    # if user is in the same node as the vehicle, matching is performed at the same time as the pickup
+                u.matched(self._tcurrent)
+
+            if u.state is u.state.INSIDE_VEHICLE and u.picked_up_time is None:
+                u.picked_up(self._tcurrent)
+                
         for uid in to_del:
             self.users.pop(uid)
 
@@ -250,6 +266,11 @@ class UserFlow(object):
                     log.info(f"User {uid} waited answer too long, cancels request for {requested_mservice._id}")
                     requested_mservice.cancel_request(uid)
                     refused_users.append(self.users[uid])
+
+                    for company in RideHailingServiceIdleCharge.instances:
+                        if list(self.users[uid].available_mobility_services)[0] == company.id:
+                            company.refused_users_counter += 1
+
                     # Interrupt user's path but keep user in the list of user_flow
                     self.users[uid].interrupt_path(self._tcurrent)
                     to_del.append(uid)

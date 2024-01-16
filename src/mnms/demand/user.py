@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 from copy import copy, deepcopy
 from enum import Enum
@@ -6,6 +7,7 @@ from typing import Union, List, Tuple, Optional, Dict
 from mnms.time import Time, Dt
 from mnms.tools.observer import TimeDependentSubject
 from mnms.log import create_logger
+from mnms.tools.dict_tools import sum_dict
 
 import numpy as np
 from numpy.linalg import norm as _norm
@@ -24,8 +26,9 @@ class UserState(Enum):
 
 
 class User(TimeDependentSubject):
-    default_response_dt = Dt(minutes=2)
-    default_pickup_dt = Dt(minutes=5)
+    default_response_dt = Dt(minutes=3)
+    default_pickup_dt = Dt(minutes=10)
+    instances = []
 
     def __init__(self,
                  _id: str,
@@ -38,7 +41,11 @@ class User(TimeDependentSubject):
                  response_dt: Optional[Dt] = None,
                  pickup_dt: Optional[Dt] = None,
                  continuous_journey: Optional[str] = None,
-                 forced_path_chosen_mobility_services: Optional[Dict[str,str]] = None):
+                 forced_path_chosen_mobility_services: Optional[Dict[str,str]] = None,
+		         origin_region=None,
+                 destination_region=None,
+                 origin_region_demand_level=None,
+                 dest_region_demand_level=None):
         """
         Class representing a User in the simulation.
 
@@ -60,6 +67,7 @@ class User(TimeDependentSubject):
             force the initial path of a user with the CSVDemandManager
         """
         super(User, self).__init__()
+        self.__class__.instances.append(self)
         self.id = _id
         self.origin = origin if not isinstance(origin, list) else np.array(origin)
         self.destination = destination if not isinstance(destination, list) else np.array(destination)
@@ -67,6 +75,15 @@ class User(TimeDependentSubject):
         self.arrival_time = None
         self.available_mobility_services = available_mobility_services if available_mobility_services is None else set(available_mobility_services)
         self.mobility_services_graph = mobility_services_graph
+        self.matched_time = None
+        self.picked_up_time = None
+
+        self.origin_region = origin_region
+        self.destination_region = destination_region
+        self.origin_region_demand_level = origin_region_demand_level
+        self.dest_region_demand_level = dest_region_demand_level
+
+        self.refused = 1        # 1 if the request wasn't served and was finally canceled
 
         self._current_link = None
         self._remaining_link_length = None
@@ -82,6 +99,7 @@ class User(TimeDependentSubject):
         self._state = UserState.STOP
 
         self.response_dt = User.default_response_dt.copy() if response_dt is None else response_dt
+        # I can overwrite the following pickup_dt dict in the way {RH1: ..., RH2: ...} to define the waiting time to be matched of users for each company. For this I can modify CSVDemandManager function
         self.pickup_dt = defaultdict(lambda: User.default_pickup_dt.copy() if pickup_dt is None else lambda: pickup_dt)
 
         self._continuous_journey = continuous_journey
@@ -121,6 +139,13 @@ class User(TimeDependentSubject):
     def is_in_vehicle(self):
         return self._vehicle is not None
 
+    def matched(self, matched_time: Time):
+        self.matched_time = matched_time
+
+    def picked_up(self, picked_up_time: Time):
+        self.picked_up_time = picked_up_time
+
+
     def finish_trip(self, arrival_time:Time):
         self.arrival_time = arrival_time
         self.set_state_arrived()
@@ -138,7 +163,7 @@ class User(TimeDependentSubject):
         self.available_mobility_services.remove(ms)
         log.info(f'User {self.id} updated list of available mobility services to {self.available_mobility_services}')
 
-    def update_path(path: "Path", gnodes, mlgraph, cost: str):
+    def update_path(self, path: "Path", gnodes, mlgraph, cost: str):
         """Method that update the path of user.
 
         Args:
@@ -155,7 +180,7 @@ class User(TimeDependentSubject):
         new_path_nodes = self.path.nodes[:path_first_node_ind] + path.nodes
         new_mobservices = [self.path.mobility_services[i] for i,(lid,sl) in enumerate(self.path.layers) if \
             path_first_node_ind >= sl.stop or (path_first_node_ind > sl.start and path_first_node_ind < sl.stop)] + path.mobility_services
-        new_path = Path(new_path_cost, None)
+        new_path = Path(new_path_nodes, None)
         new_path.construct_layers_from_links(gnodes)
         new_path.set_mobility_services(new_mobservices)
         new_path_cost = new_path.update_path_cost(mlgraph, cost)
@@ -216,9 +241,11 @@ class User(TimeDependentSubject):
 
     def set_state_inside_vehicle(self):
         self._state = UserState.INSIDE_VEHICLE
+        self.refused = 0
 
     def set_state_waiting_vehicle(self):
         self._state = UserState.WAITING_VEHICLE
+        self.refused = 0
 
     def set_state_waiting_answer(self):
         self._state = UserState.WAITING_ANSWER
@@ -331,7 +358,7 @@ class Path(object):
         for i,(lid, sl) in enumerate(self.layers):
             ms = self.mobility_services[i]
             for j in range(sl.start, sl.stop-1):
-                un = path_nodes[j]
-                dn = path_nodes[j+1]
+                un = self.nodes[j]
+                dn = self.nodes[j+1]
                 path_cost += mlgraph.graph.nodes[un].adj(dn).costs[ms][cost]
         self.path_cost = path_cost
