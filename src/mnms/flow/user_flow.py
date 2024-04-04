@@ -266,6 +266,10 @@ class UserFlow(object):
                     log.info(f"User {uid} waited answer too long, cancels request for {requested_mservice._id}")
                     requested_mservice.cancel_request(uid)
                     refused_users.append(self.users[uid])
+                    if self.users[uid].mobility_services_graph == 'UBER' and requested_mservice == 'UBER':
+                        self.users[uid].pickup_dt['LYFT'] = self.users[uid].pickup_dt['UBER'] - self.users[uid].response_dt
+                    if self.users[uid].mobility_services_graph == 'LYFT' and requested_mservice == 'LYFT':
+                        self.users[uid].pickup_dt['UBER'] = self.users[uid].pickup_dt['LYFT'] - self.users[uid].response_dt
 
                     for company in RideHailingServiceIdleCharge.instances:
                         if list(self.users[uid].available_mobility_services)[0] == company.id:

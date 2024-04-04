@@ -212,7 +212,7 @@ class RideHailingServiceIdleCharge(AbstractMobilityService):        # charge per
         self.service_km_profit = 1.7
 
         self.expenses_per_km = 0.3     # gaz + insurance + depreciation price
-        self.idle_km_or_h_charge = 0
+        self.idle_km_or_h_charge = 4
 
         self.driver_hour_min_payment = 18
 

@@ -8,7 +8,7 @@ from mnms.mobility_service.ride_hailing_batch import *
 from mnms.flow.MFD import MFDFlowMotor
 from mnms.vehicles.veh_type import Vehicle, ActivityType
 import pandas as pd
-from collections import defaultdict
+from collections import defaultdict, Counter
 import matplotlib.pyplot as plt
 import time
 import os.path
@@ -26,7 +26,7 @@ import os.path
 #### the attribute 'available_mobility_services' is not empty - the user appeared very close to the end of simulation
 #### and didn't have time to be matched
 
-def nb_of_cancellations():
+"""def nb_of_cancellations():
     nb_cancel_n_wait = {}
     nb_real_cancel = {}
     for company in RideHailingServiceIdleCharge.instances:
@@ -62,16 +62,196 @@ def nb_of_served_users(number_of_users, number_of_cancellations):
         number_of_served_users[key] = number_of_users[key] - number_of_cancellations[key]
     print("Nb of served users (nb of users-cancellations):")
     print(number_of_served_users)
-    return number_of_served_users
+    return number_of_served_users"""
+
+def user_number_analysis(deadend_users):
+
+    df = pd.read_csv('/Users/maryia/Documents/GitHub/MyMnMs/examples/my_example/path.csv', sep=';')
+
+    ###################################
+    # Group by ID and count the occurrences
+    id_counts = df['ID'].value_counts()
+
+    # Filter IDs that are present in exactly 3 rows
+    result_ids_three_rows = id_counts[id_counts == 3].index.tolist()
+
+    # Filter IDs that contain 'UBER' in the 'SERVICES' column of their first row
+    three_rows_ids_uber = \
+    df.loc[df['ID'].isin(result_ids_three_rows) & (df.groupby('ID')['SERVICES'].head(1) == 'WALK UBER WALK')]['ID'].unique()
+
+    # Get the number of IDs
+    num_ids_three_rows_uber = len(three_rows_ids_uber)
+
+    #print(f"Number of IDs that occur in 3 rows and contain 'UBER' in the SERVICES of their first row: {num_ids_three_rows_uber}")
+
+    # Filter IDs that contain 'LYFT' in the 'SERVICES' column of their first row
+    three_rows_ids_lyft = \
+        df.loc[df['ID'].isin(result_ids_three_rows) & (df.groupby('ID')['SERVICES'].head(1) == 'WALK LYFT WALK')]['ID'].unique()
+
+    # Get the number of IDs
+    num_ids_three_rows_lyft = len(three_rows_ids_lyft)
+
+    #print(
+    #    f"Number of IDs that occur in 3 rows and contain 'LYFT' in the SERVICES of their first row: {num_ids_three_rows_lyft}")
+
+    #################################################
+
+    ###################################
+    # Filter IDs that are present in exactly 2 rows
+    result_ids_two_rows = id_counts[id_counts == 2].index.tolist()
+
+    # Filter IDs that contain 'UBER' in the 'SERVICES' column of their first row
+    two_rows_ids_uber = \
+        df.loc[df['ID'].isin(result_ids_two_rows) & (df.groupby('ID')['SERVICES'].head(1) == 'WALK UBER WALK')]['ID'].unique()
+
+    # Get the number of IDs
+    num_ids_two_rows_uber = len(two_rows_ids_uber)
+
+    #print(
+    #    f"Number of IDs that occur in 2 rows and contain 'UBER' in the SERVICES of their first row: {num_ids_two_rows_uber}")
+
+    # Filter IDs that contain 'LYFT' in the 'SERVICES' column of their first row
+    two_rows_ids_lyft = \
+        df.loc[df['ID'].isin(result_ids_two_rows) & (df.groupby('ID')['SERVICES'].head(1) == 'WALK LYFT WALK')]['ID'].unique()
+
+    # Get the number of IDs
+    num_ids_two_rows_lyft = len(two_rows_ids_lyft)
+
+    #print(
+    #    f"Number of IDs that occur in 2 rows and contain 'LYFT' in the SERVICES of their first row: {num_ids_two_rows_lyft}")
+
+    ###################################
+    # Filter IDs that are present in exactly 1 row
+    result_ids_one_row = id_counts[id_counts == 1].index.tolist()
+
+    # Filter IDs that contain 'UBER' in the 'SERVICES' column of their first row
+    one_row_ids_uber = \
+        df.loc[df['ID'].isin(result_ids_one_row) & (df.groupby('ID')['SERVICES'].head(1) == 'WALK UBER WALK')][
+            'ID'].unique()
+
+    # Get the number of IDs
+    num_ids_one_row_uber = len(one_row_ids_uber)
+
+    # print(
+    #    f"Number of IDs that occur in 1 row and contain 'UBER' in the SERVICES of their first row: {num_ids_one_row_uber}")
+
+    # Filter IDs that contain 'LYFT' in the 'SERVICES' column of their first row
+    one_row_ids_lyft = \
+        df.loc[df['ID'].isin(result_ids_one_row) & (df.groupby('ID')['SERVICES'].head(1) == 'WALK LYFT WALK')][
+            'ID'].unique()
+
+    # Get the number of IDs
+    num_ids_one_row_lyft = len(one_row_ids_lyft)
+
+    # print(
+    #    f"Number of IDs that occur in 1 row and contain 'LYFT' in the SERVICES of their first row: {num_ids_one_row_lyft}")
+
+    #################################################
+
+    """# Group by ID and count the occurrences
+    id_counts = df['ID'].value_counts()
+
+    # Filter IDs that are present in exactly 3 rows
+    result_ids = id_counts[id_counts == 3].index.tolist()
+
+    # Get the value of 'SERVICES' for the first row of each ID
+    result_services = df.loc[df['ID'].isin(result_ids)].groupby('ID')['SERVICES'].first()
+
+    print("Transferred and rejected users:")
+    # Print both ID and corresponding SERVICES value
+    for result_id, services_value in zip(result_services.index, result_services):
+        print(f"ID: {result_id}, SERVICES: {services_value}")
+
+    # Filter IDs that are present in exactly 2 rows
+    result_ids = id_counts[id_counts == 2].index.tolist()
+
+    # Get the value of 'SERVICES' for the first row of each ID
+    result_services = df.loc[df['ID'].isin(result_ids)].groupby('ID')['SERVICES'].first()
+
+    print("Transferred and served users:")
+    # Print both ID and corresponding SERVICES value
+    for result_id, services_value in zip(result_services.index, result_services):
+        print(f"ID: {result_id}, SERVICES: {services_value}")"""
+
+    #######################################################
+
+    #print("IDs of refused users according to me:")
+    refused_ids = []
+    for instance in User.instances:         # works only after actual simulation
+        if instance.refused == 1:
+            refused_ids.append(instance.id)
+            #print(instance.id)
+
+    rejected_uber = []
+    rejected_uber.extend(three_rows_ids_uber)
+    deadend_uber = list(set(deadend_users) & set(two_rows_ids_uber))        # intersection of two lists
+    rejected_uber.extend(deadend_uber)
+
+    rejected_lyft = []
+    rejected_lyft.extend(three_rows_ids_lyft)
+    deadend_lyft = list(set(deadend_users) & set(two_rows_ids_lyft))        # intersection of two lists
+    rejected_lyft.extend(deadend_lyft)
+
+    transferred_uber = [x for x in two_rows_ids_uber if x not in set(deadend_users)]
+    transeferd_n_served_uber = [x for x in transferred_uber if x not in set(refused_ids)]
+    transferred_lyft = [x for x in two_rows_ids_lyft if x not in set(deadend_users)]
+    transeferd_n_served_lyft = [x for x in transferred_lyft if x not in set(refused_ids)]
+    not_matched_yet = [x for x in refused_ids if x not in set(deadend_users)]
+    served_uber = [x for x in one_row_ids_uber if x not in set(refused_ids)]
+    served_lyft = [x for x in one_row_ids_lyft if x not in set(refused_ids)]
 
 
-def avg_matching_time():
+    print("Successfully transferred and served from uber: " + str(len(transeferd_n_served_uber)))       # original company: Uber, served by: Lyft
+    print("Successfully transferred and served from lyft: " + str(len(transeferd_n_served_lyft)))
+    print("Rejected users of uber: " + str(len(rejected_uber)))
+    print("Rejected users of lyft: " + str(len(rejected_lyft)))
+    print("Waiting to be matched at the end of simulation: " + str(len(not_matched_yet)))       # works only after actual simulation
+    print("Served users of uber: " + str(len(served_uber)))         #original company: Uber, served by: Uber
+    print("Served users of lyft: " + str(len(served_lyft)))
+
+    # Filter the dataframe to select the first row for each ID
+    first_row_per_id = df.groupby('ID').first()
+
+    # Count the number of unique IDs where 'WALK UBER WALK' is present in the 'SERVICES' column
+    original_nb_uber_users = first_row_per_id[first_row_per_id['SERVICES'].str.contains('WALK UBER WALK')].shape[0]
+    original_nb_lyft_users = first_row_per_id[first_row_per_id['SERVICES'].str.contains('WALK LYFT WALK')].shape[0]
+
+    print("Original nb of UBER users:", original_nb_uber_users)
+    print("Original nb of LYFT users:", original_nb_lyft_users)
+    wait_at_end_uber = original_nb_uber_users - len(transeferd_n_served_uber) - len(rejected_uber) - len(served_uber)       # nb of users that are still waiting to be matched at the end of simulation
+    wait_at_end_lyft = original_nb_lyft_users - len(transeferd_n_served_lyft) - len(rejected_lyft) - len(served_lyft)
+
+    print("Wait for matching at the end UBER users:", wait_at_end_uber)
+    print("Wait for matching at the end LYFT users:", wait_at_end_lyft)
+
+    """print("intersection of uber ids: ")
+    intersection = served_uber + rejected_uber + transeferd_n_served_uber + not_matched_yet
+    ids_counts = Counter(intersection)
+    common_ids = [element for element, count in ids_counts.items() if count >= 2]
+
+    print(common_ids)"""
+    return served_uber, served_lyft, transeferd_n_served_uber, transeferd_n_served_lyft, original_nb_uber_users, original_nb_lyft_users, wait_at_end_uber, wait_at_end_lyft, rejected_uber, rejected_lyft
+
+def deadend_users():
+    df = pd.read_csv('/Users/maryia/Documents/GitHub/MyMnMs/examples/my_example/user.csv', sep=';')
+
+    # Filter IDs with 'DEADEND' in the 'STATE' column
+    result_ids_deadend = df.loc[df['STATE'] == 'DEADEND', 'ID'].unique()
+
+    print("DEADEND users: " + str(len(result_ids_deadend)))
+    #print(result_ids_deadend)
+
+    return result_ids_deadend
+
+def avg_matching_time(served_uber, served_lyft, transeferd_n_served_uber, transeferd_n_served_lyft):
     nb_of_matched_users = defaultdict(int)
     avg_match_time = {}
     for user in User.instances:
         if user.matched_time is not None:
-            nb_of_matched_users[list(user.available_mobility_services)[0]] += 1
-
+            if user.id in served_uber or user.id in transeferd_n_served_uber:
+                nb_of_matched_users['UBER'] += 1
+            if user.id in served_lyft or user.id in transeferd_n_served_lyft:
+                nb_of_matched_users['LYFT'] += 1
     for key2 in nb_of_matched_users:
         if nb_of_matched_users[key2] != 0:
             avg_match_time[key2] = 0
@@ -82,11 +262,15 @@ def avg_matching_time():
             print(instance.matched_time)
             print(instance.refused)
             print(str(list(instance.available_mobility_services)))"""
-            if instance.refused == 0 and list(instance.available_mobility_services)[0] == key2 and instance.matched_time is not None:
-                avg_match_time[key2] += Dt.to_seconds(instance.matched_time) - Dt.to_seconds(instance.departure_time)
-
-                # dummy = Dt.to_seconds(instance.matched_time) - Dt.to_seconds(instance.departure_time)
-                # dummy = Dt.__sub__(instance.matched_time, instance.departure_time)
+            #if instance.refused == 0 and list(instance.available_mobility_services)[0] == key2 and instance.matched_time is not None:
+            #    avg_match_time[key2] += Dt.to_seconds(instance.matched_time) - Dt.to_seconds(instance.departure_time)
+            if instance.matched_time is not None and instance.refused == 0:
+                if key2 == 'UBER' and (instance.id in served_uber or instance.id in transeferd_n_served_uber):
+                    avg_match_time[key2] += Dt.to_seconds(instance.matched_time) - Dt.to_seconds(
+                        instance.departure_time)
+                if key2 == 'LYFT' and (instance.id in served_lyft or instance.id in transeferd_n_served_lyft):
+                    avg_match_time[key2] += Dt.to_seconds(instance.matched_time) - Dt.to_seconds(
+                        instance.departure_time)
 
     for key3 in avg_match_time:
         avg_match_time[key3] = avg_match_time[key3] / nb_of_matched_users[key3]
@@ -96,30 +280,41 @@ def avg_matching_time():
     return avg_match_time
 
 
-def avg_pickup_time():
-    average_pickup_time = {}
+def avg_pickup_time(served_uber, served_lyft, transeferd_n_served_uber, transeferd_n_served_lyft):
+    avg_pickup_time = {}
     nb_of_picked_up_users = defaultdict(int)
     for user in User.instances:
         if user.picked_up_time is not None:
-            nb_of_picked_up_users[list(user.available_mobility_services)[0]] += 1
+            if user.id in served_uber or user.id in transeferd_n_served_uber:
+                nb_of_picked_up_users['UBER'] += 1
+            if user.id in served_lyft or user.id in transeferd_n_served_lyft:
+                nb_of_picked_up_users['LYFT'] += 1
     for key2 in nb_of_picked_up_users:
         if nb_of_picked_up_users[key2] != 0:
-            average_pickup_time[key2] = 0
+            avg_pickup_time[key2] = 0
         for instance in User.instances:
-            if instance.refused == 0 and list(instance.available_mobility_services)[0] == key2 and \
-                    instance.state != UserState.WAITING_VEHICLE and instance.picked_up_time is not None:
-                average_pickup_time[key2] += Dt.to_seconds(instance.picked_up_time) - Dt.to_seconds(
-                    instance.matched_time)
+            if instance.picked_up_time is not None and instance.state != UserState.WAITING_VEHICLE and instance.refused == 0:
+                if key2 == 'UBER' and (instance.id in served_uber or instance.id in transeferd_n_served_uber):
+                    avg_pickup_time[key2] += Dt.to_seconds(instance.picked_up_time) - Dt.to_seconds(
+                        instance.matched_time)
+                if key2 == 'LYFT' and (instance.id in served_lyft or instance.id in transeferd_n_served_lyft):
+                    avg_pickup_time[key2] += Dt.to_seconds(instance.picked_up_time) - Dt.to_seconds(
+                        instance.matched_time)
 
-    for key3 in average_pickup_time:
-        average_pickup_time[key3] = average_pickup_time[key3] / nb_of_picked_up_users[key3]
+            #if instance.refused == 0 and list(instance.available_mobility_services)[0] == key2 and \
+            #        instance.state != UserState.WAITING_VEHICLE and instance.picked_up_time is not None:
+            #    avg_pickup_time[key2] += Dt.to_seconds(instance.picked_up_time) - Dt.to_seconds(
+            #        instance.matched_time)
 
-    print("average_pickup_time: " + str(average_pickup_time))
+    for key3 in avg_pickup_time:
+        avg_pickup_time[key3] = avg_pickup_time[key3] / nb_of_picked_up_users[key3]
+
+    print("average_pickup_time: " + str(avg_pickup_time))
     print("nb of picked up users used to calculate the pick up time: " + str(nb_of_picked_up_users))    # all users with non-empty pick-up time
-    return average_pickup_time
+    return avg_pickup_time
 
 
-def avg_idle_dist():
+def avg_idle_dist(served_uber, served_lyft, transeferd_n_served_uber, transeferd_n_served_lyft):
     average_idle_distance = {}
     total_idle_distance = {}
     total_service_distance = {}
@@ -127,7 +322,11 @@ def avg_idle_dist():
     nb_of_served_users = defaultdict(int)
     for user in User.instances:
         if user.picked_up_time is not None:
-            nb_of_picked_up_users[list(user.available_mobility_services)[0]] += 1
+            if user.id in served_uber or user.id in transeferd_n_served_lyft:
+                nb_of_picked_up_users['UBER'] += 1
+            if user.id in served_lyft or user.id in transeferd_n_served_uber:
+                nb_of_picked_up_users['LYFT'] += 1
+            #nb_of_picked_up_users[list(user.available_mobility_services)[0]] += 1
 
     for key2 in nb_of_picked_up_users:
         if nb_of_picked_up_users[key2] != 0:
@@ -150,7 +349,11 @@ def avg_idle_dist():
 
     for user in User.instances:
         if user.arrival_time is not None:
-            nb_of_served_users[list(user.available_mobility_services)[0]] += 1
+            if user.id in served_uber or user.id in transeferd_n_served_lyft:
+                nb_of_served_users['UBER'] += 1
+            if user.id in served_lyft or user.id in transeferd_n_served_uber:
+                nb_of_served_users['LYFT'] += 1
+            #nb_of_served_users[list(user.available_mobility_services)[0]] += 1
 
     for key2 in nb_of_served_users:
         if nb_of_served_users[key2] != 0:
@@ -162,7 +365,7 @@ def avg_idle_dist():
 
     return average_idle_distance, total_idle_distance, total_service_distance
 
-def profit_analysis():
+def profit_analysis(served_uber, served_lyft, transeferd_n_served_uber, transeferd_n_served_lyft):
     total_profit_per_comp = {}     # total profit of drivers of each company
     for company in RideHailingServiceIdleCharge.instances:
         total_profit_per_comp[company.id] = 0
@@ -172,13 +375,17 @@ def profit_analysis():
     print("total profit of drivers of each company: " + str(total_profit_per_comp))
 
     nb_of_matched_users = defaultdict(int)
-    for user in User.instances:
+    for user in User.instances:                     # using the number of matched users cuz the profit of driver is updated at the moment of matching and not the moment of picking up
         if user.matched_time is not None:
-            nb_of_matched_users[list(user.available_mobility_services)[0]] += 1
+            if user.id in served_uber or user.id in transeferd_n_served_lyft:
+                nb_of_matched_users['UBER'] += 1
+            if user.id in served_lyft or user.id in transeferd_n_served_uber:
+                nb_of_matched_users['LYFT'] += 1
+            #nb_of_matched_users[list(user.available_mobility_services)[0]] += 1
 
     avg_profit_per_trip = {}
-    for key in total_profit_per_comp:
-        avg_profit_per_trip[key] = total_profit_per_comp[key] / nb_of_matched_users[key]
+    avg_profit_per_trip['UBER'] = total_profit_per_comp['UBER'] / nb_of_matched_users['UBER']
+    avg_profit_per_trip['LYFT'] = total_profit_per_comp['LYFT'] / nb_of_matched_users['LYFT']
     print("avg profit of driver per trip: " + str(avg_profit_per_trip))
 
     veh_count = {}
@@ -271,13 +478,21 @@ def save_idle_dist():
 
 
 
-def statistics_output(nb_users, nb_veh, nb_refused, nb_cancel_n_wait, avg_match_time, avg_pick_time,
+def statistics_output(served_uber, served_lyft, transeferd_n_served_uber, transeferd_n_served_lyft,
+                      original_nb_uber_users, original_nb_lyft_users, wait_at_end_uber, wait_at_end_lyft,
+                      rejected_uber, rejected_lyft,
+                      nb_veh, avg_match_time, avg_pick_time,
                       avg_idle, total_idle, total_service,
                       profit_per_trip, profit_per_day, total_profit_per_comp,
                       speed):
     service = ['UBER', 'LYFT']
-    nb_users2 = [nb_users['UBER'], nb_users['LYFT']]
+    nb_users2 = [original_nb_uber_users, original_nb_lyft_users]
     nb_veh2 = [nb_veh['UBER'], nb_veh['LYFT']]
+    nb_own_served_users = [len(served_uber), len(served_lyft)]
+    nb_transferred_n_served = [len(transeferd_n_served_uber), len(transeferd_n_served_lyft)]
+    nb_wait_at_end_users = [wait_at_end_uber, wait_at_end_lyft]
+    nb_rejected_users = [len(rejected_uber), len(rejected_lyft)]
+
 
     charge = []
     for company in RideHailingServiceIdleCharge.instances:
@@ -290,8 +505,6 @@ def statistics_output(nb_users, nb_veh, nb_refused, nb_cancel_n_wait, avg_match_
             break
 
     print(charge)
-    nb_of_cancel2 = [nb_refused['UBER'], nb_refused['LYFT']]
-    nb_cancel_n_wait2 = [nb_cancel_n_wait['UBER'], nb_cancel_n_wait['LYFT']]
     avg_match_time2 = [avg_match_time['UBER'], avg_match_time['LYFT']]
     avg_pick_time2 = [avg_pick_time['UBER'], avg_pick_time['LYFT']]
     avg_wait_time = [g + h for g, h in zip(avg_match_time2, avg_pick_time2)]
@@ -317,11 +530,13 @@ def statistics_output(nb_users, nb_veh, nb_refused, nb_cancel_n_wait, avg_match_
 
     data = {
         "SERVICE": service,
-        "NB_USERS": nb_users2,
+        "USERS": nb_users2,
+        "OWN_SERVED_USERS": nb_own_served_users,
+        "TRANS_N_SERVED(ORIGIN_COMP)": nb_transferred_n_served,
+        "WAIT_AT_END_(ORIGIN_COMP)": nb_wait_at_end_users,
+        "REJECTED": nb_rejected_users,
         "NB_VEH": nb_veh2,
         "CHARGE": charge,
-        "CANCEL": nb_of_cancel2,
-        "CANCEL_N_WAIT": nb_cancel_n_wait2,
         "MATCH_TIME": avg_match_time2,
         "PICKUP_TIME": avg_pick_time2,
         "WAIT_TIME": avg_wait_time,
@@ -336,12 +551,12 @@ def statistics_output(nb_users, nb_veh, nb_refused, nb_cancel_n_wait, avg_match_
         "SPEED": speed2
     }
 
-    """folder = '/Users/maryia/Documents/GitHub/MnMS/examples/my_example/graphs/Random_seed/data/'
-    file_name = '40_150_150.csv'
+    folder = '/Users/maryia/Documents/GitHub/MyMnMs/examples/my_example/graphs/Coop_300_100/data_coop/'
+    file_name = '40_300_100.csv'
     df = pd.DataFrame(data)
     #print(df)
     if not os.path.exists(folder + file_name):
         df.to_csv(folder + file_name, sep=';', index=False)
     else:
-        df.to_csv(folder + 'dummy_file', sep=';', index=False)"""
+        df.to_csv(folder + 'dummy_file', sep=';', index=False)
 

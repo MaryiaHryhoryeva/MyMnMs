@@ -1,6 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
-from typing import List, Set, Dict
+from typing import List, Set, Dict, Tuple
 from enum import Enum
 import csv
 import multiprocessing

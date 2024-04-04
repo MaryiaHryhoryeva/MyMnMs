@@ -876,9 +876,9 @@ class SharedVehicleLayer(AbstractLayer):
     @classmethod
     def __load__(cls, data: Dict, roads: RoadDescriptor):
         """
-        Load exogeneous layer data into a new layer
+        Load exogeneous layer data_coop into a new layer
         Args:
-            data: Dict containing the data of the layer to be created
+            data: Dict containing the data_coop of the layer to be created
             roads: Road descriptor
 
         Returns:
